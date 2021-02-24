@@ -9,4 +9,4 @@ npm install
 
 npm run start
 
-simply initialize the database using this API: http://localhost:3000/api/
+simply initialize the database using this API (default): http://localhost:3000/api/
