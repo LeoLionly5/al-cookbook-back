@@ -1,9 +1,10 @@
 // const express = require('express');
-const mysql = require('mysql');
+// const mysql = require('mysql');
+require('dotenv').config();
 const express = require('express');
 const Router = require('./routes/api');
 const dbConnection = require('./middlewares/mysql');
-const path = require('path');
+// const path = require('path');
 const bodyParser = require('body-parser');
 const app = express();
 dbConnection.connect();
@@ -29,6 +30,6 @@ app.use((req, res, next) => {
     next(error);
 });
 
-app.listen("3000", function() {
-    console.log('Server running on localhost:' + "3000");
+app.listen(process.env.BACKEND_PORT, function() {
+    console.log('Server running on localhost:' + process.env.BACKEND_PORT);
 });
