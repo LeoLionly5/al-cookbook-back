@@ -195,6 +195,18 @@ Router.post(apiUrl+'/addRecipeToMealCart', (req, res) => {
     });
 });
 
+// delete recipe from meal cart
+const deleteRecipeFromMealCart = `DELETE FROM meal_cart_recipe WHERE meal_cart_id = ? AND recipe_id = ?`;
+Router.delete(apiUrl+'/deleteRecipeFromMealCart', (req, res) => {
+    dbConnection.query(deleteRecipeFromMealCart, [1,req.body.recipe_id], (err, result) => {
+        if(err){
+          console.log('[SELECT ERROR] - ',err.message);
+          return;
+        }
+        res.status(200).json(result);
+    });
+});
+
 // get meal cart by meal_cart_id
 const getMealCartById = `SELECT * FROM meal_cart_recipe LEFT JOIN recipe \
     ON meal_cart_recipe.recipe_id = recipe.recipe_id \
@@ -225,7 +237,12 @@ Router.get(apiUrl+'/getMealCartById', (req, res) => {
 //     "update_time": null
 // }]
 
-//test/////////////////////////////////////////////////////////////////////////////////
+// main apis end /////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+// test apis /////////////////////////////////////////////////////////////////////////////////////
 const sql = 'SELECT * FROM testTable';
 Router.get(apiUrl+'/test', function(req, res, next) {
     dbConnection.query(sql,function (err, result) {
@@ -233,19 +250,19 @@ Router.get(apiUrl+'/test', function(req, res, next) {
           console.log('[SELECT ERROR] - ',err.message);
           return;
         }
-       res.send(result);
+        res.status(200).json(result);
     });
 });
 
-Router.get(apiUrl+'/uploadimage', function(req, res, next) {
+Router.get(apiUrl+'/uploadImage', function(req, res, next) {
     fs.readFile("public/images/test.png", (err, data) => {
         dbConnection.query(`INSERT INTO testImage (image) VALUES(?)`, data, (err, res) => {
-            res.send("upload sucess");
+            res.status(200).json({msg: "upload complete"});
         });
     });
 });
 
-Router.get(apiUrl+'/getimage', function(req, res, next) {
+Router.get(apiUrl+'/getImage', function(req, res, next) {
     fs.readFile("public/images/test.png", (err, data) => {
         dbConnection.query(`SELECT * FROM testImage`, function (err, result) {
             if(err){
@@ -259,6 +276,30 @@ Router.get(apiUrl+'/getimage', function(req, res, next) {
             res.send("<img src='data:image/png;base64, "+ bufferBase64 +"'/>");
         });
     });
+});
+
+Router.get(apiUrl+'/uploadTestRecipe', function(req, res, next) {
+    fs.readFile("public/images/Stir-fried tomato with egg.png", (err, data) => {
+        dbConnection.query(`INSERT INTO recipe (recipe_id, recipe_name, prep_time, cook_time, main_image, calorie_per_100g) VALUES(?, ?, ?, ?, ?, ?)`,
+        ["1", "Stir-fried tomato with egg", 10, 10, data, 74], (err, result) => {
+        });
+    });
+    fs.readFile("public/images/Steak.png", (err, data) => {
+        dbConnection.query(`INSERT INTO recipe (recipe_id, recipe_name, prep_time, cook_time, main_image, calorie_per_100g) VALUES(?, ?, ?, ?, ?, ?)`,
+        ["2", "Steak", 10, 20, data, 131], (err, result) => {
+        });
+    });
+    fs.readFile("public/images/Cake.png", (err, data) => {
+        dbConnection.query(`INSERT INTO recipe (recipe_id, recipe_name, prep_time, cook_time, main_image, calorie_per_100g) VALUES(?, ?, ?, ?, ?, ?)`,
+        ["3", "Cake", 30, 60, data, 347], (err, result) => {
+        });
+    });
+    fs.readFile("public/images/Macaron.png", (err, data) => {
+        dbConnection.query(`INSERT INTO recipe (recipe_id, recipe_name, prep_time, cook_time, main_image, calorie_per_100g) VALUES(?, ?, ?, ?, ?, ?)`,
+        ["4", "Macaron", 60, 90, data, 361], (err, result) => {
+        });
+    });
+    res.status(200).json({msg: "upload complete"});
 });
 
 module.exports = Router;
