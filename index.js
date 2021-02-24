@@ -20,6 +20,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended:false}));
 app.use('/', Router);
 
+
+
 app.get('/', function(req, res) {
     res.send('It works !');
 });

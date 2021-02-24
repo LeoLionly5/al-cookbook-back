@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mysql = require('mysql');
 const Router = express.Router();
@@ -6,6 +7,37 @@ const apiUrl = '/api' ;
 const fs = require('fs');
 const bitmap = fs.readFileSync("public/images/test.png");
 const outputfile = "output.png";
+
+// initialization of database
+var dataSql = fs.readFileSync(process.env.MYSQL_init).toString();
+// delete the last '\r\n' in the .sql file
+var numStr = 0;
+for (var i = 1; i<dataSql.length-1; i++){
+    if (dataSql.charAt(dataSql.length-i) == ';'){
+        numStr = i;
+        break;
+    }
+}
+dataSql_2 = dataSql.slice(0, -numStr);
+// cut .sql into queries
+const dataArr = dataSql_2.toString().split(";");
+// console.log(dataArr);
+Router.get(apiUrl, function(req, res, next) {
+    dataArr.forEach(query => {
+        // console.log(query);
+        if (query) {
+          query += ";";
+          dbConnection.query(query, (err, result) => {
+            if(err){
+              console.log('[SELECT ERROR] - ',err.message);
+              return;
+            }
+        });
+        }
+    });
+    console.log("Database initialization ended");
+    res.status(200).json({msg: "Database initialization ended"});
+});
 
 // upload recipe
 const uploadRecipe = `INSERT INTO recipe (recipe_id, recipe_name) VALUES(?,?)`
