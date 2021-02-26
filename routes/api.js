@@ -80,7 +80,7 @@ Router.get(apiUrl+'/getAllRecipes', (req, res) => {
 
 // get recipe by recipe_id
 const getRecipeById = `SELECT * FROM recipe WHERE recipe_id = ?`;
-Router.get(apiUrl+'/getRecipeById', (req, res) => {
+Router.post(apiUrl+'/getRecipeById', (req, res) => {
     // console.log(JSON.stringify(req.body))
     dbConnection.query(getRecipeById, [req.body.recipe_id], (err, result) => {
         if(err){
@@ -93,8 +93,8 @@ Router.get(apiUrl+'/getRecipeById', (req, res) => {
 
 // get recipe by recipe_name, using "LIKE"
 const getRecipesByName = `SELECT * FROM recipe WHERE recipe_name LIKE "%`;
-Router.get(apiUrl+'/getRecipesByName', (req, res) => {
-    console.log(JSON.stringify(req.body))
+Router.post(apiUrl+'/getRecipesByName', (req, res) => {
+    // console.log(JSON.stringify(req.body))
     dbConnection.query(getRecipesByName + req.body.recipe_name +'%"', (err, result) => {
         if(err){
           console.log('[SELECT ERROR] - ',err.message);
@@ -108,9 +108,38 @@ Router.get(apiUrl+'/getRecipesByName', (req, res) => {
 const getRecipesByCategory = `SELECT * FROM recipe WHERE recipe_id IN ( \
     SELECT recipe_id FROM recipe_category WHERE category_id = ( \
     SELECT category_id FROM category WHERE category_id = ? ) )`;
-Router.get(apiUrl+'/getRecipesByCategory', (req, res) => {
+Router.post(apiUrl+'/getRecipesByCategory', (req, res) => {
     // console.log(JSON.stringify(req.body))
     dbConnection.query(getRecipesByCategory, [req.body.category_id], (err, result) => {
+        if(err){
+          console.log('[SELECT ERROR] - ',err.message);
+          return;
+        }
+        res.status(200).json(result);
+    });
+});
+
+// get category by recipe_id
+const getCategoryByRecipeId = `SELECT * FROM category WHERE category_id IN ( \
+    SELECT category_id FROM recipe_category WHERE recipe_id = ?)`;
+Router.post(apiUrl+'/getCategoryByRecipeId', (req, res) => {
+    // console.log(JSON.stringify(req.body))
+    dbConnection.query(getCategoryByRecipeId, [req.body.recipe_id], (err, result) => {
+        if(err){
+          console.log('[SELECT ERROR] - ',err.message);
+          return;
+        }
+        res.status(200).json(result);
+    });
+});
+
+// get recommended recipe
+const getRecommendedRecipe = `SELECT * FROM recipe WHERE recipe_id IN ( \
+    SELECT recipe_id FROM recipe_category WHERE category_id IN ( \
+    SELECT category_id FROM recipe_category WHERE recipe_id = ? ))`;
+Router.post(apiUrl+'/getRecommendedRecipe', (req, res) => {
+    console.log(JSON.stringify(req.body))
+    dbConnection.query(getRecommendedRecipe, [req.body.recipe_id], (err, result) => {
         if(err){
           console.log('[SELECT ERROR] - ',err.message);
           return;
@@ -163,7 +192,7 @@ const getNutritionbyRecipeId = `SELECT * FROM recipe_ingredient LEFT JOIN ingred
     ON recipe_ingredient.ingredient_id = ingredient_nutrition.ingredient_id LEFT JOIN nutrition \
     ON ingredient_nutrition.nutrition_id = nutrition.nutrition_id \
     WHERE recipe_ingredient.recipe_id = ?`;
-Router.get(apiUrl+'/getNutritionbyRecipeId', (req, res) => {
+Router.post(apiUrl+'/getNutritionbyRecipeId', (req, res) => {
     dbConnection.query(getNutritionbyRecipeId, [req.body.recipe_id], (err, result) => {
         if(err){
           console.log('[SELECT ERROR] - ',err.message);
@@ -184,8 +213,9 @@ Router.get(apiUrl+'/getNutritionbyRecipeId', (req, res) => {
 // }]
 
 // add recipe to meal cart
-const addRecipeToMealCart = `INSERT INTO meal_cart_recipe (meal_cart_id, recipe_id) VALUES(?,?)`;
+const addRecipeToMealCart = `INSERT INTO meal_cart_recipe (meal_cart_id, recipe_id) VALUES(?,?);`;
 Router.post(apiUrl+'/addRecipeToMealCart', (req, res) => {
+    console.log(req.body);
     dbConnection.query(addRecipeToMealCart, [1,req.body.recipe_id], (err, result) => {
         if(err){
           console.log('[SELECT ERROR] - ',err.message);
@@ -269,6 +299,7 @@ Router.get(apiUrl+'/getImage', function(req, res, next) {
               console.log('[SELECT ERROR] - ',err.message);
               return;
             }
+            console.log(result[0].image)
             var buffer = new Buffer.from(result[0].image);
             var bufferBase64 = buffer.toString('base64');
             fs.writeFileSync(outputfile, bufferBase64);
