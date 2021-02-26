@@ -167,9 +167,9 @@ Router.get(apiUrl+'/getAllCategories', (req, res) => {
 // }]
 
 //get ingredients by recipe_id
-const getIngredientsByRecipeId = `SELECT * FROM ingredient WHERE ingredient_id IN(\
-    SELECT ingredient_id from recipe_ingredient WHERE recipe_id = ?)`;
-Router.get(apiUrl+'/getIngredientsByRecipeId', (req, res) => {
+const getIngredientsByRecipeId = `SELECT * FROM ingredient LEFT JOIN recipe_ingredient \
+ON ingredient.ingredient_id = recipe_ingredient.ingredient_id WHERE recipe_id = ?`;
+Router.post(apiUrl+'/getIngredientsByRecipeId', (req, res) => {
     dbConnection.query(getIngredientsByRecipeId, [req.body.recipe_id], (err, result) => {
         if(err){
           console.log('[SELECT ERROR] - ',err.message);
@@ -227,7 +227,7 @@ Router.post(apiUrl+'/addRecipeToMealCart', (req, res) => {
 
 // delete recipe from meal cart
 const deleteRecipeFromMealCart = `DELETE FROM meal_cart_recipe WHERE meal_cart_id = ? AND recipe_id = ?`;
-Router.delete(apiUrl+'/deleteRecipeFromMealCart', (req, res) => {
+Router.post(apiUrl+'/deleteRecipeFromMealCart', (req, res) => {
     dbConnection.query(deleteRecipeFromMealCart, [1,req.body.recipe_id], (err, result) => {
         if(err){
           console.log('[SELECT ERROR] - ',err.message);
@@ -241,7 +241,7 @@ Router.delete(apiUrl+'/deleteRecipeFromMealCart', (req, res) => {
 const getMealCartById = `SELECT * FROM meal_cart_recipe LEFT JOIN recipe \
     ON meal_cart_recipe.recipe_id = recipe.recipe_id \
     WHERE meal_cart_recipe.meal_cart_id = ?`;
-Router.get(apiUrl+'/getMealCartById', (req, res) => {
+Router.post(apiUrl+'/getMealCartById', (req, res) => {
     dbConnection.query(getMealCartById, [1], (err, result) => {
         if(err){
           console.log('[SELECT ERROR] - ',err.message);
@@ -266,6 +266,49 @@ Router.get(apiUrl+'/getMealCartById', (req, res) => {
 //     "create_time": null,
 //     "update_time": null
 // }]
+
+// getNutritionByMealCart
+const getNutritionByMealCart = `SELECT nutrition.nutrition_id, nutrition.nutrition_name, SUM(amount_per_100g) AS amount FROM recipe_ingredient LEFT JOIN ingredient_nutrition \
+    ON recipe_ingredient.ingredient_id = ingredient_nutrition.ingredient_id LEFT JOIN nutrition \
+    ON ingredient_nutrition.nutrition_id = nutrition.nutrition_id \
+    WHERE recipe_ingredient.recipe_id IN ( \
+    SELECT recipe_id FROM meal_cart_recipe WHERE meal_cart_id = ?) GROUP BY nutrition.nutrition_id`;
+Router.get(apiUrl+'/getNutritionByMealCart', (req, res) => {
+    dbConnection.query(getNutritionByMealCart, [1], (err, result) => {
+        if(err){
+          console.log('[SELECT ERROR] - ',err.message);
+          return;
+        }
+        res.status(200).json(result);
+    });
+});
+
+// getCalorieByMealCart
+const getCalorieByMealCart = `SELECT SUM(calorie_per_100g) AS calorie FROM meal_cart_recipe LEFT JOIN recipe \
+ON meal_cart_recipe.recipe_id = recipe.recipe_id WHERE meal_cart_recipe.meal_cart_id = ?`;
+Router.get(apiUrl+'/getCalorieByMealCart', (req, res) => {
+    dbConnection.query(getCalorieByMealCart, [1], (err, result) => {
+        if(err){
+          console.log('[SELECT ERROR] - ',err.message);
+          return;
+        }
+        res.status(200).json(result);
+    });
+});
+
+//getIngredientsByMealCart
+const getIngredientsByMealCart = `SELECT SUM(quantity_g) AS quantity, ingredient_name FROM ingredient LEFT JOIN recipe_ingredient \
+ON ingredient.ingredient_id = recipe_ingredient.ingredient_id WHERE recipe_id IN (\
+SELECT recipe_id FROM meal_cart_recipe WHERE meal_cart_id = ?) GROUP BY ingredient.ingredient_id`;
+Router.get(apiUrl+'/getIngredientsByMealCart', (req, res) => {
+    dbConnection.query(getIngredientsByMealCart, [1], (err, result) => {
+        if(err){
+          console.log('[SELECT ERROR] - ',err.message);
+          return;
+        }
+        res.status(200).json(result);
+    });
+});
 
 // main apis end /////////////////////////////////////////////////////////////////////////////////
 
